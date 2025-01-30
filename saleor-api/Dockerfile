@@ -19,10 +19,9 @@ RUN apt-get -y update \
 WORKDIR /app
 
 RUN pip install poetry==1.8.4
-
 RUN poetry config virtualenvs.create false
 
-COPY pyproject.toml poetry.lock /app/
+COPY pyproject.toml poetry.lock /app/ 
 
 RUN poetry install --no-root 
 
@@ -33,8 +32,6 @@ RUN groupadd -r saleor && useradd -r -g saleor saleor && chown -R saleor:saleor 
 ARG STATIC_URL
 ENV STATIC_URL=${STATIC_URL:-/static/}
 RUN SECRET_KEY=dummy STATIC_URL=${STATIC_URL} python3 manage.py collectstatic --no-input
-
-RUN python3 manage.py collectstatic --no-input
 
 EXPOSE 8000
 

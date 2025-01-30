@@ -1,0 +1,126 @@
+# version: '3.9'
+services:
+  saleor-api:
+    build:
+      context: ./saleor-api/
+      dockerfile: Dockerfile
+    ports: 
+      - "8000:8000"
+    depends_on:
+      - saleor-db
+      - cache
+      - monitoring 
+    volumes:
+      - saleor-media:/app/media
+    environment:
+      ALLOWED_HOSTS: "localhost, api, dashboard"
+      JAEGER_AGENT_HOST: monitoring
+      DASHBOARD_URL: "http://localhost:9000" 
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}  
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      SECRET_KEY: ${SECRET_KEY} 
+      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/graphql"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - saleor-backend-tier
+
+  saleor-dashboard:
+    build:
+      context: ./saleor-dashboard/
+      dockerfile: Dockerfile
+    ports: 
+      - "9000:9000"
+    depends_on:
+      - saleor-api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - saleor-backend-tier
+
+  saleor-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+     - "5432:5432"
+    volumes:
+      - saleor-db:/var/lib/postgresql/data  
+      - ./db/init-scripts/replica_user.sql:/docker-entrypoint-initdb.d/replica_user.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - saleor-backend-tier
+
+  cache:
+    image: redis:7.0-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - saleor-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+    - saleor-backend-tier
+  
+  monitoring:
+    image: jaegertracing/all-in-one:1.20.0
+    ports:
+      - "16686:16686"
+      - "6831:6831/udp"
+    volumes: 
+      - tmpfs:/tmp
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:16686"]
+      interval: 30s        
+      timeout: 10s         
+      retries: 3     
+    restart: unless-stopped 
+    networks:
+      - saleor-backend-tier
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8025"] 
+      interval: 30s        
+      timeout: 10s         
+      retries: 3          
+    restart: unless-stopped
+    networks:
+      - saleor-backend-tier
+
+volumes:
+  saleor-db: 
+  saleor-redis:
+  saleor-media:
+  tmpfs:
+
+networks:
+  saleor-backend-tier:
+    driver: bridge
