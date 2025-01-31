@@ -22,6 +22,7 @@ COPY locale/ /app/locale/
 COPY src/ /app/src/
 COPY scripts/ /app/scripts/
 COPY vite.config.js /app/
+COPY *.d.ts /app/
 COPY tsconfig.json /app/
 COPY schema.graphql /app/
 COPY introspection.json /app/
@@ -30,13 +31,16 @@ COPY .featureFlags/ /app/.featureFlags/
 
 #Configure Environment Variables
 ARG API_URL
-ENV API_URL=${API_URL:-http://localhost:8000/graphql/}
+ENV API_URL=${API_URL:-http://localhost:9000/graphql/}
 
 ARG APP_MOUNT_URI 
-ENV APP_MOUNT_URI=${APP_MOUNT_URI:-https://apps.saleor.io/api/v2/saleor-apps}
+ENV APP_MOUNT_URI=${APP_MOUNT_URI:-/dashboard/}
 
 ARG APPS_MARKETPLACE_API_URL
-ENV APPS_MARKETPLACE_API_URL=${APPS_MARKETPLACE_API_URL}
+ENV APPS_MARKETPLACE_API_URL=${APPS_MARKETPLACE_API_URL:-https://apps.saleor.io/api/v2/saleor-apps}
+
+ARG APPS_TUNNEL_URL_KEYWORDS
+ENV APPS_TUNNEL_URL_KEYWORDS=${APPS_TUNNEL_URL_KEYWORDS}
 
 ARG STATIC_URL
 ENV STATIC_URL=${STATIC_URL:-/dashboard/}
