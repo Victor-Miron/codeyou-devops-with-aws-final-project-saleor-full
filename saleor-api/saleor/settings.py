@@ -105,11 +105,10 @@ DATABASE_CONNECTION_REPLICA_NAME = "replica"
 
 DATABASES = {
     DATABASE_CONNECTION_DEFAULT_NAME: dj_database_url.config(
-        default="postgres://saleor:saleor@localhost:5432/saleor",
-        conn_max_age=DB_CONN_MAX_AGE,
+        default=f"postgres://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT', '5432')}/{os.getenv('POSTGRES_DB')}",        conn_max_age=DB_CONN_MAX_AGE,
     ),
     DATABASE_CONNECTION_REPLICA_NAME: dj_database_url.config(
-        default="postgres://saleor:saleor@localhost:5432/saleor",
+        default=f"postgres://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT', '5432')}/{os.getenv('POSTGRES_DB')}",
         # TODO: We need to add read only user to saleor platform,
         # and we need to update docs.
         # default="postgres://saleor_read_only:saleor@localhost:5432/saleor",

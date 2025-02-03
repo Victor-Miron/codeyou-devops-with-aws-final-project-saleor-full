@@ -14,6 +14,7 @@ RUN apt-get -y update \
   mime-support \
   libpq5 \
   libpq-dev \
+  postgresql-client \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 

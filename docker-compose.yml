@@ -21,7 +21,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_HOST: ${POSTGRES_HOST}  
       POSTGRES_PORT: 5432
       SECRET_KEY: ${SECRET_KEY} 
       RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
@@ -52,7 +51,7 @@ services:
       - saleor-backend-tier
 
   db:
-    image: postgres:15-alpine
+    image: postgres:15-alpine   
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
