@@ -32,9 +32,7 @@ RUN groupadd -r saleor && useradd -r -g saleor saleor && chown -R saleor:saleor 
 
 ARG STATIC_URL
 ENV STATIC_URL=${STATIC_URL:-/static/}
-ENV SECRET_KEY=${SECRET_KEY} 
-
-RUN SECRET_KEY=${SECRET_KEY} STATIC_URL=${STATIC_URL} python3 manage.py collectstatic --no-input
+RUN SECRET_KEY=dummy STATIC_URL=${STATIC_URL} python3 manage.py collectstatic --no-input
 
 EXPOSE 8000
 
