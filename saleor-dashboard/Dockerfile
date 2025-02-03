@@ -1,21 +1,23 @@
 #Builder
 FROM node:18-alpine AS builder
 
-# Install bash using apk
-RUN apk add --no-cache bash
-
 # Define the working directory
 WORKDIR /app
 
 # Manage Dependencies
-COPY package.json package-lock.json /app/
-
-# Set CI environment to 1 (to avoid prompts during the build)
-ENV CI=1
+COPY package.json /app/
+COPY package-lock.json /app/
 
 # Install the dependencies using npm ci
 RUN npm ci --legacy-peer-deps 
 
+# Install bash using apk
+RUN apk add --no-cache bash
+
+# Set CI environment to 1 (to avoid prompts during the build)
+ENV CI=1
+
+# Copy necessary files to the container
 COPY nginx/ /app/nginx/
 COPY assets/ /app/assets/
 COPY locale/ /app/locale/
@@ -52,7 +54,7 @@ ARG LOCALE_CODE
 ENV LOCALE_CODE=${LOCALE_CODE:-EN} 
 
 # Build the Application
-RUN npm run build
+RUN npm run build 
 
 # Production stage
 FROM nginx:stable-alpine
