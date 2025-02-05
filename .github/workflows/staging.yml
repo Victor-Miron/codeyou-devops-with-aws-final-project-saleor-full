@@ -1,9 +1,0 @@
-name: Saleor Develop Pipeline
-
-on: 
-  push:
-    branches:
-      - staging
-
-jobs:
-  
