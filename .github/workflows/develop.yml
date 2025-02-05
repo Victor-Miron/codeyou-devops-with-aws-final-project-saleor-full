@@ -3,7 +3,7 @@ name: Saleor Develop Pipeline
 on: 
   push:
     branches:
-      -develop
+      - develop
 
 jobs:
   lint:
