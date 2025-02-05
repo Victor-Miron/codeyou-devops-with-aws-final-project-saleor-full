@@ -5,8 +5,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Manage Dependencies
-COPY package.json /app/
-COPY package-lock.json /app/
+COPY package.json package-lock.json /app/
 
 # Install the dependencies using npm ci
 RUN npm ci --legacy-peer-deps 
@@ -18,40 +17,29 @@ RUN apk add --no-cache bash
 ENV CI=1
 
 # Copy necessary files to the container
-COPY nginx/ /app/nginx/
-COPY assets/ /app/assets/
-COPY locale/ /app/locale/
-COPY src/ /app/src/
-COPY scripts/ /app/scripts/
-COPY vite.config.js /app/
-COPY *.d.ts /app/
-COPY tsconfig.json /app/
-COPY schema.graphql /app/
-COPY introspection.json /app/
-COPY .featureFlags/ /app/.featureFlags/
+COPY nginx/ assets/ locale/ src/ scripts/ vite.config.js *.d.ts tsconfig.json schema.graphql introspection.json .featureFlags/ /app/
 
-
-#Configure Environment Variables
+# Configure Environment Variables
 ARG API_URL
-ENV API_URL=${API_URL:-http://localhost:9000/graphql/}
+ENV API_URL=$API_URL
 
-ARG APP_MOUNT_URI 
-ENV APP_MOUNT_URI=${APP_MOUNT_URI:-/dashboard/}
+ARG APP_MOUNT_URI
+ENV APP_MOUNT_URI=$APP_MOUNT_URI
 
 ARG APPS_MARKETPLACE_API_URL
-ENV APPS_MARKETPLACE_API_URL=${APPS_MARKETPLACE_API_URL:-https://apps.saleor.io/api/v2/saleor-apps}
+ENV APPS_MARKETPLACE_API_URL=$APPS_MARKETPLACE_API_URL
 
 ARG APPS_TUNNEL_URL_KEYWORDS
-ENV APPS_TUNNEL_URL_KEYWORDS=${APPS_TUNNEL_URL_KEYWORDS}
+ENV APPS_TUNNEL_URL_KEYWORDS=$APPS_TUNNEL_URL_KEYWORDS
 
 ARG STATIC_URL
-ENV STATIC_URL=${STATIC_URL:-/dashboard/}
+ENV STATIC_URL=$STATIC_URL
 
 ARG SKIP_SOURCEMAPS
-ENV SKIP_SOURCEMAPS=${SKIP_SOURCEMAPS:-true}
+ENV SKIP_SOURCEMAPS=$SKIP_SOURCEMAPS
 
 ARG LOCALE_CODE
-ENV LOCALE_CODE=${LOCALE_CODE:-EN} 
+ENV LOCALE_CODE=$LOCALE_CODE
 
 # Build the Application
 RUN npm run build 
@@ -77,5 +65,3 @@ EXPOSE 80
 
 # Make sure nginx runs in the foreground to keep the container alive
 CMD ["nginx", "-g", "daemon off;"]
-
-
