@@ -1,4 +1,4 @@
-name: Saleor Develop Pipeline
+name: saleor develop pipeline
 
 on: 
   push:
