@@ -1,0 +1,46 @@
+name: Saleor Develop Pipeline
+
+on: 
+  push:
+    branches:
+      -develop
+
+jobs:
+  lint:
+    runs-on: ubuntu:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 
+      
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with: 
+          python-version: 3.9
+      
+      - name: Install Dependencies and run Flake
+        run: | 
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8
+          flake8 .
+
+      - name: Analyze dependencies for vulnerabilities
+        run: | 
+          pip install pip-audit
+          pip audit -r requirements.txt  
+
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        run: actions/checkout@v3
+      
+      - name: Build docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/develop:develop .
+
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Docker push Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/develop:develop  
