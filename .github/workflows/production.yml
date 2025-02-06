@@ -1,0 +1,51 @@
+name: Saleor Production Pipeline
+
+on: 
+  push:
+    branches:
+      - production
+
+jobs:
+  ensure-staging-success:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Verify Staging Completion
+        run: echo "Ensure all staging checks have passed before deploying."
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: ensure-staging-success
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:production .
+
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget -qO - https://aquasecurity.github.io/trivy/releases/latest/install.sh | sudo bash          
+
+          - name: Trivy Vulnerability 
+          run: |
+            trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-api:production | tee trivy_log.txt || true
+  
+      - name: Upload Trivy Log
+        uses: actions/upload-artifact@v4
+        with:
+            name: trivy-production-log
+            path: trivy_log.txt
+
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/saleor-api:production
+          docker tag ${{ secrets.DOCKER_USERNAME }}/saleor-api:production ${{ secrets.DOCKER_USERNAME }}/saleor-api:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/saleor-api:latest

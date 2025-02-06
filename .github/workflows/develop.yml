@@ -65,9 +65,15 @@ jobs:
           sudo apt-get install -y wget
           wget -qO - https://aquasecurity.github.io/trivy/releases/latest/install.sh | sudo bash          
 
-      - name: Run Trivy Scan
-        continue-on-error: true
-        run: trivy image --exit-code 0 --severity HIGH,CRITICAL ${{ secrets.DOCKER_USERNAME }}/develop:develop
+          - name: Trivy Vulnerability 
+          run: |
+            trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop | tee trivy_log.txt || true
+  
+      - name: Upload Trivy Log
+        uses: actions/upload-artifact@v4
+        with:
+            name: trivy-develop-log
+            path: trivy_log.txt
 
 
       - name: Login to DockerHub
