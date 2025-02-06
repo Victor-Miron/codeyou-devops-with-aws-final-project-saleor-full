@@ -4,20 +4,32 @@ FROM node:18-alpine AS builder
 # Define the working directory
 WORKDIR /app
 
+# Install bash using apk
+RUN apk add --no-cache bash
+
 # Manage Dependencies
 COPY package.json package-lock.json /app/
 
 # Install the dependencies using npm ci
 RUN npm ci --legacy-peer-deps 
 
-# Install bash using apk
-RUN apk add --no-cache bash
-
 # Set CI environment to 1 (to avoid prompts during the build)
 ENV CI=1
 
-# Copy necessary files to the container
-COPY nginx/ assets/ locale/ src/ scripts/ vite.config.js *.d.ts tsconfig.json schema.graphql introspection.json .featureFlags/ /app/
+# Copy source files in separate steps
+COPY nginx/ /app/nginx/
+COPY assets/ /app/assets/
+COPY locale/ /app/locale/
+COPY src/ /app/src/
+COPY scripts/ /app/scripts/
+
+# Copy individual configuration files
+COPY vite.config.js /app/
+COPY tsconfig.json /app/
+COPY schema.graphql /app/
+COPY introspection.json /app/
+COPY *.d.ts /app/
+COPY .featureFlags/ /app/.featureFlags/
 
 # Configure Environment Variables
 ARG API_URL
@@ -45,7 +57,7 @@ ENV LOCALE_CODE=$LOCALE_CODE
 RUN npm run build 
 
 # Production stage
-FROM nginx:stable-alpine
+FROM nginx:stable-alpine AS runner
 
 # Set working directory in production image
 WORKDIR /app 
