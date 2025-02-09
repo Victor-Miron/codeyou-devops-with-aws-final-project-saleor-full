@@ -1,9 +1,9 @@
 FROM python:3.12
 
-# Install system dependencies
+# Set the working directory
 WORKDIR /app
 
-# Install Poetry
+# Install system dependencies
 RUN apt-get -y update && apt-get install -y --no-install-recommends \
   gettext \
   libffi8 \
@@ -18,36 +18,35 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
   libpq5 \
   libpq-dev \
   postgresql-client \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
-RUN pip install poetry==1.8.4
+RUN pip install --no-cache-dir poetry==1.8.4
 
-# Disable Poetry virtual environments
+# Configure Poetry to install dependencies directly in the system environment
 RUN poetry config virtualenvs.create false
 
-# Create a non-root user & group for security
-RUN groupadd -r saleor && useradd -r -g saleor saleor && chown -R saleor:saleor /app/ 
-
 # Copy dependency files
-COPY pyproject.toml poetry.lock /app/ 
+COPY pyproject.toml poetry.lock /app/
 
 # Install dependencies
 RUN poetry install --no-root
 
+# Create a non-root user & group for security
+RUN groupadd -r saleor && useradd -r -g saleor saleor && chown -R saleor:saleor /app/
+
+# Switch to the saleor user before copying application files
+USER saleor
+
 # Copy application files
-COPY . /app/
+COPY --chown=saleor:saleor . /app/
 
 # Collect static files
 ARG STATIC_URL
 ENV STATIC_URL=${STATIC_URL:-/static/}
 RUN SECRET_KEY=dummy STATIC_URL=${STATIC_URL} python3 manage.py collectstatic --no-input
 
-# Switch to the saleor user before running the application
-USER saleor
-
-# Expose the API port
+# Expose the application port
 EXPOSE 8000
 
 # Define the command to run the API using Gunicorn with Uvicorn workers

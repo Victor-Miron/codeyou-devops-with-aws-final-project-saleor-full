@@ -105,11 +105,11 @@ DATABASE_CONNECTION_REPLICA_NAME = "replica"
 
 DATABASES = {
     DATABASE_CONNECTION_DEFAULT_NAME: dj_database_url.config(
-        default=os.environ.get("DATABASE_URL", "postgres://saleor:saleor@localhost:5432/saleor"),
+        default=f"postgres://saleor:saleor@localhost:5432/saleor",        
         conn_max_age=DB_CONN_MAX_AGE,
     ),
     DATABASE_CONNECTION_REPLICA_NAME: dj_database_url.config(
-        default=os.environ.get("DATABASE_REPLICA_URL", "postgres://saleor:saleor@localhost:5432/saleor"),
+        default=f"postgres://saleor:saleor@localhost:5432/saleor",
         # TODO: We need to add read only user to saleor platform,
         # and we need to update docs.
         # default="postgres://saleor_read_only:saleor@localhost:5432/saleor",
@@ -527,7 +527,7 @@ PLACEHOLDER_IMAGES = {
 
 AUTHENTICATION_BACKENDS = [
     "saleor.core.auth_backend.JSONWebTokenBackend",
-    "saleor.core.auth_backend.PluginBackend"
+    "saleor.core.auth_backend.PluginBackend",
 ]
 
 # Expired checkouts settings - defines after what time checkouts will be deleted
@@ -758,9 +758,6 @@ GRAPHQL_MIDDLEWARE: list[str] = []
 GRAPHQL_QUERY_MAX_COMPLEXITY = int(
     os.environ.get("GRAPHQL_QUERY_MAX_COMPLEXITY", 50000)
 )
-
-GRAPHQL_API_URL = os.environ.get("GRAPHQL_API_URL", "http://localhost:8000/graphql/")
-
 
 # Max number entities that can be requested in single query by Apollo Federation
 # Federation protocol implements no securities on its own part - malicious actor
@@ -993,3 +990,6 @@ TRANSACTION_ITEMS_LIMIT = 100
 # Disable Django warnings regarding too long cache keys being incompatible with
 # memcached to avoid leaking key values.
 warnings.filterwarnings("ignore", category=CacheKeyWarning)
+
+GRAPHQL_URL = "/graphql/"
+
