@@ -54,6 +54,8 @@
       needs: lint
       runs-on: ubuntu-latest
       env:
+        DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        DATABASE_USER: ${{ secrets.DATABASE_USER }}
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
         RSA_PRIVATE_KEY: |
           ${{ secrets.RSA_PRIVATE_KEY }}
