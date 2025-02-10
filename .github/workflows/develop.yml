@@ -80,8 +80,8 @@
 
         - name: Tag images for Docker Hub
           run: |
-            docker tag saleor-api${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
-            docker tag saleor-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
+            docker tag codeyou-devops-with-aws-final-project-saleor-full-api ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
+            docker tag odeyou-devops-with-aws-final-project-saleor-full-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
                   
     
         - name: Run health check 
