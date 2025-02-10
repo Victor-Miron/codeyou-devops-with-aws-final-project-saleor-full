@@ -75,10 +75,13 @@ jobs:
 
       - name: Build Saleor API Image
         run: |
-          docker build --build-arg DATABASE_URL=${{ secrets.DATABASE_URL }} \
-                       --build-arg SECRET_KEY=${{ secrets.SECRET_KEY }} \
-                       --build-arg ALLOWED_GRAPHQL_ORIGINS="${{ secrets.DASHBOARD_URL }},${{ secrets.API_URL }}" \
-                       -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop -f saleor-api/Dockerfile saleor-api
+          docker build -f saleor-api/Dockerfile \
+             --build-arg DATABASE_URL=${{ secrets.DATABASE_URL }} \
+             --build-arg SECRET_KEY=${{ secrets.SECRET_KEY }} \
+             --build-arg ALLOWED_GRAPHQL_ORIGINS="${{ secrets.DASHBOARD_URL }},${{ secrets.API_URL }}" \
+             -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop \
+             saleor-api 
+
       
         
       - name: Build Saleor Dashboard Image
