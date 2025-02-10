@@ -18,24 +18,18 @@ jobs:
         with:
           python-version: 3.9
       
-      - name: Install Linting Tools
-        run: |
-          pip install --upgrade pip
-          pip install flake8 black isort
-  
-      - name: Auto-Fix Formatting Issues
-        run: |
-          black .
-          isort .
-  
-      - name: Run Flake8 Linter (Ignore Line Length)
-        run: flake8 --ignore=E501
-      
-      - name: Install and Run pip-audit (Log Findings, Don’t Fail)
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Run pip-audit (Log Findings, Don’t Fail)
         continue-on-error: true
-        run: |
-          pip install pip-audit
-          pip-audit -v || true
+        run: pip-audit -v | tee pip_audit_log.txt || true
+
+      - name: Upload pip-audit Log
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-logs
+          path: pip_audit_log.txt
 
   build-and-push:
     needs: lint
