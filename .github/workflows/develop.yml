@@ -87,8 +87,22 @@
             docker tag codeyou-devops-with-aws-final-project-saleor-full-api ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
             docker tag codeyou-devops-with-aws-final-project-saleor-full-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
                   
-    
         - name: Run health check 
+          env:
+            DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+            DATABASE_USER: ${{ secrets.DATABASE_USER }}
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
+            RSA_PRIVATE_KEY: ${{ secrets.RSA_PRIVATE_KEY }}
+            GRAPHQL_API_URL: ${{ secrets.GRAPHQL_API_URL }}
+            SECRET_KEY: ${{ secrets.SECRET_KEY }}
+            ALLOWED_GRAPHQL_ORIGINS: "${{ secrets.DASHBOARD_URL }},${{ secrets.API_URL }}"
+            API_URL: ${{ secrets.API_URL }}
+            ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+            JAEGER_AGENT_HOST: ${{ secrets.JAEGER_AGENT_HOST }}
+            DASHBOARD_URL: ${{ secrets.DASHBOARD_URL }}
+            DJANGO_SUPERUSER_USERNAME: ${{ secrets.DJANGO_SUPERUSER_USERNAME }}
+            DJANGO_SUPERUSER_EMAIL: ${{ secrets.DJANGO_SUPERUSER_EMAIL }}
+            DJANGO_SUPERUSER_PASSWORD: ${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
           run: |
             docker compose up -d --wait
             sleep 15
