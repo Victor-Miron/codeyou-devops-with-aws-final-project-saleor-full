@@ -53,6 +53,18 @@ jobs:
   build-and-push:
     needs: lint
     runs-on: ubuntu-latest
+    env:
+      RSA_PRIVATE_KEY: ${{ secrets.RSA_PRIVATE_KEY }}
+      GRAPHQL_API_URL: ${{ secrets.GRAPHQL_API_URL }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      ALLOWED_GRAPHQL_ORIGINS: "${{ secrets.DASHBOARD_URL }},${{ secrets.API_URL }}"
+      API_URL: ${{ secrets.API_URL }}
+      ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+      JAEGER_AGENT_HOST: ${{ secrets.JAEGER_AGENT_HOST }}
+      DASHBOARD_URL: ${{ secrets.DASHBOARD_URL }}
+      DJANGO_SUPERUSER_USERNAME: ${{ secrets.DJANGO_SUPERUSER_USERNAME }}
+      DJANGO_SUPERUSER_EMAIL: ${{ secrets.DJANGO_SUPERUSER_EMAIL }}
+      DJANGO_SUPERUSER_PASSWORD: ${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
 
     steps:
       - name: Checkout code
@@ -61,15 +73,24 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build docker-api Image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop -f saleor-api/Dockerfile saleor-api
-
-      - name: Build Docker Image for saleor-dashboard
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop -f saleor-dashboard/Dockerfile saleor-dashboard
+      - name: Build Saleor API Image
+        run: |
+          docker build --build-arg DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                       --build-arg SECRET_KEY=${{ secrets.SECRET_KEY }} \
+                       --build-arg ALLOWED_GRAPHQL_ORIGINS="${{ secrets.DASHBOARD_URL }},${{ secrets.API_URL }}" \
+                       -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop -f saleor-api/Dockerfile saleor-api
+      
+        
+      - name: Build Saleor Dashboard Image
+        run: |
+          docker build --build-arg DASHBOARD_SECRET=${{ secrets.DASHBOARD_SECRET }} \
+                      --build-arg API_BASE_URL=${{ secrets.API_BASE_URL }} \
+                      -t ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop -f saleor-dashboard/Dockerfile saleor-dashboard
+                
   
       - name: Run Health Check for API(Accept 200 or 404)
         run: |
-          docker run --rm -d --name temp_api -p 8000:80 ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop 
+          docker run --rm -d --name temp_api -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop 
           sleep 10
           if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/graphql/ | grep -qE "200|404"; then
             echo " API Health Check Passed"
@@ -80,7 +101,7 @@ jobs:
 
       - name: Run Health Check for Dashboard(Accept 200 or 404)
         run: |
-          docker run --rm -d --name temp_dashboard -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop 
+          docker run --rm -d --name temp_dashboard -p 9000:80 ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop 
           sleep 10
           if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 | grep -qE "200|404"; then
             echo " Dashboard Health Check Passed"
@@ -98,12 +119,12 @@ jobs:
       - name: Trivy Vulnerability Scan (API)
         continue-on-error: true
         run: |
-          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop | tee trivy_api_log.txt || true
+          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop | tee trivy_api_log.txt
   
       - name: Trivy Vulnerability Scan (Dashboard)
         continue-on-error: true
         run: |
-          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop | tee trivy_dashboard_log.txt || true
+          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop | tee trivy_dashboard_log.txt
       
       - name: Upload Trivy Log
         uses: actions/upload-artifact@v4
