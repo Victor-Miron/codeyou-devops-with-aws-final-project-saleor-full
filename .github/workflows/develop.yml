@@ -107,6 +107,12 @@
             docker compose up -d --wait
             sleep 15
           
+        - name: Apply Database Migrations
+          run: |
+              docker compose exec api python manage.py migrate --noinput
+         
+        - name: Waiting if services are running    
+          run: |
             # Check PostgreSQL is running
             until docker compose exec -T db pg_isready -U ${{ secrets.DATABASE_USER }}; do
               echo "Waiting for PostgreSQL..."
