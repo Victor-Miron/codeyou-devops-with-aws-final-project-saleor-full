@@ -38,11 +38,6 @@ services:
       retries: 3
     networks:
       - saleor-backend-tier
-    command: >
-      sh -c "python3 manage.py migrate &&
-            python3 manage.py createsuperuser --no-input || true &&
-            gunicorn --bind :8000 --workers 4 --worker-class saleor.asgi.gunicorn_worker.UvicornWorker saleor.asgi:application"
-
 
   dashboard:
     build:
