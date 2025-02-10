@@ -1,147 +1,150 @@
-name: saleor develop pipeline
+  name: saleor develop pipeline
 
-on:
-  push:
-    branches:
-      - develop
+  on:
+    push:
+      branches:
+        - develop
 
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-
-      - name: Install Linting Tools
-        run: |
-          pip install --upgrade pip
-          pip install flake8 black isort
-  
-      - name: Auto-Fix Formatting Issues
-        run: |
-          black .
-          isort .
-  
-      - name: Run Flake8 Linter (Log Findings, Don’t Fail)
-        continue-on-error: true
-        run: flake8 --ignore=W503 | tee flake8_log.txt || true
-  
-      - name: Upload Flake8 Log
-        uses: actions/upload-artifact@v4
-        with:
-          name: flake8-logs
-          path: flake8_log.txt
-  
-      - name: Install pip-audit
-        run: pip install pip-audit
-
-      - name: Run pip-audit (Log Findings, Don’t Fail)
-        continue-on-error: true
-        run: pip-audit -v | tee pip_audit_log.txt || true
-
-      - name: Upload pip-audit Log
-        uses: actions/upload-artifact@v4
-        with:
-          name: pip-audit-logs
-          path: pip_audit_log.txt
-
-  build-and-push:
-    needs: lint
-    runs-on: ubuntu-latest
-    env:
-      RSA_PRIVATE_KEY: ${{ secrets.RSA_PRIVATE_KEY }}
-      GRAPHQL_API_URL: ${{ secrets.GRAPHQL_API_URL }}
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      ALLOWED_GRAPHQL_ORIGINS: "${{ secrets.DASHBOARD_URL }},${{ secrets.API_URL }}"
-      API_URL: ${{ secrets.API_URL }}
-      ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
-      JAEGER_AGENT_HOST: ${{ secrets.JAEGER_AGENT_HOST }}
-      DASHBOARD_URL: ${{ secrets.DASHBOARD_URL }}
-      DJANGO_SUPERUSER_USERNAME: ${{ secrets.DJANGO_SUPERUSER_USERNAME }}
-      DJANGO_SUPERUSER_EMAIL: ${{ secrets.DJANGO_SUPERUSER_EMAIL }}
-      DJANGO_SUPERUSER_PASSWORD: ${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build Saleor API Image
-        run: |
-          docker build -f saleor-api/Dockerfile \
-             --build-arg DATABASE_URL=${{ secrets.DATABASE_URL }} \
-             --build-arg SECRET_KEY=${{ secrets.SECRET_KEY }} \
-             --build-arg ALLOWED_GRAPHQL_ORIGINS="${{ secrets.DASHBOARD_URL }},${{ secrets.API_URL }}" \
-             -t ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop \
-             saleor-api 
-
-      
+  jobs:
+    lint:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
         
-      - name: Build Saleor Dashboard Image
-        run: |
-          docker build --build-arg DASHBOARD_SECRET=${{ secrets.DASHBOARD_SECRET }} \
-                      --build-arg API_BASE_URL=${{ secrets.API_BASE_URL }} \
-                      -t ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop -f saleor-dashboard/Dockerfile saleor-dashboard
-                
-  
-      - name: Run Health Check for API(Accept 200 or 404)
-        run: |
-          docker run --rm -d --name temp_api -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop 
-          sleep 10
-          if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/graphql/ | grep -qE "200|404"; then
-            echo " API Health Check Passed"
-          else
-            echo " Health Check Failed" && exit 1
-          fi
-          docker stop temp_api && docker rm temp_api
+        - name: Set up Python 3.9
+          uses: actions/setup-python@v4
+          with:
+            python-version: 3.9
 
-      - name: Run Health Check for Dashboard(Accept 200 or 404)
-        run: |
-          docker run --rm -d --name temp_dashboard -p 9000:80 ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop 
-          sleep 10
-          if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 | grep -qE "200|404"; then
-            echo " Dashboard Health Check Passed"
-          else
-            echo " Health Check Failed" && exit 1
-          fi
-          docker stop temp_dashboard && docker rm temp_dashboard
+        - name: Install Linting Tools
+          run: |
+            pip install --upgrade pip
+            pip install flake8 black isort
+    
+        - name: Auto-Fix Formatting Issues
+          run: |
+            black .
+            isort .
+    
+        - name: Run Flake8 Linter (Log Findings, Don’t Fail)
+          continue-on-error: true
+          run: flake8 --ignore=W503 | tee flake8_log.txt || true
+    
+        - name: Upload Flake8 Log
+          uses: actions/upload-artifact@v4
+          with:
+            name: flake8-logs
+            path: flake8_log.txt
+    
+        - name: Install pip-audit
+          run: pip install pip-audit
 
-      - name: Install Trivy
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget
-          wget -qO - https://aquasecurity.github.io/trivy/releases/latest/install.sh | sudo bash          
+        - name: Run pip-audit (Log Findings, Don’t Fail)
+          continue-on-error: true
+          run: pip-audit -v | tee pip_audit_log.txt || true
 
-      - name: Trivy Vulnerability Scan (API)
-        continue-on-error: true
-        run: |
-          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop | tee trivy_api_log.txt
-  
-      - name: Trivy Vulnerability Scan (Dashboard)
-        continue-on-error: true
-        run: |
-          trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop | tee trivy_dashboard_log.txt
-      
-      - name: Upload Trivy Log
-        uses: actions/upload-artifact@v4
-        with:
-            name: trivy-logs
-            path: |
-              trivy_api_log.txt
-              trivy_dashboard_log.txt
+        - name: Upload pip-audit Log
+          uses: actions/upload-artifact@v4
+          with:
+            name: pip-audit-logs
+            path: pip_audit_log.txt
 
-      - name: Login to DockerHub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+    build-and-push:
+      needs: lint
+      runs-on: ubuntu-latest
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        RSA_PRIVATE_KEY: ${{ secrets.RSA_PRIVATE_KEY }}
+        GRAPHQL_API_URL: ${{ secrets.GRAPHQL_API_URL }}
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        ALLOWED_GRAPHQL_ORIGINS: "${{ secrets.DASHBOARD_URL }},${{ secrets.API_URL }}"
+        API_URL: ${{ secrets.API_URL }}
+        ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+        JAEGER_AGENT_HOST: ${{ secrets.JAEGER_AGENT_HOST }}
+        DASHBOARD_URL: ${{ secrets.DASHBOARD_URL }}
+        DJANGO_SUPERUSER_USERNAME: ${{ secrets.DJANGO_SUPERUSER_USERNAME }}
+        DJANGO_SUPERUSER_EMAIL: ${{ secrets.DJANGO_SUPERUSER_EMAIL }}
+        DJANGO_SUPERUSER_PASSWORD: ${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
 
-      - name: Push Api Image to DockerHub
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
 
-      - name: Push Dashboard Image to DockerHub
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v2
+
+        - name: Build images using Docker Compose
+          run: |
+            docker compose build
+
+        - name: Tag images for Docker Hub
+          run: |
+              docker tag saleor-api${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
+              docker tag saleor-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
+                  
+    
+        - name: Run health check 
+          run: |
+            docker compose up -d --wait
+            sleep 15
+
+         run: |
+          docker-compose up -d
+          sleep 15
+          
+          # Check PostgreSQL is running
+          until docker-compose exec -T db pg_isready -U ${{ secrets.DATABASE_USER }}; do
+            echo "Waiting for PostgreSQL..."
+            sleep 5
+          done
+          echo "✅ Database is ready!"
+          
+          # Check Redis is running
+          until docker-compose exec -T redis redis-cli ping | grep -q PONG; do
+            echo "Waiting for Redis..."
+            sleep 5
+          done
+          echo " Redis is ready!"
+
+          # Check API is running
+          until curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/graphql/ | grep -qE "200|404"; do
+            echo "Waiting for API..."
+            sleep 5
+          done
+          echo " API Health Check Passed"
+          
+          docker compose down
+
+        - name: Install Trivy
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y wget
+            wget -qO - https://aquasecurity.github.io/trivy/releases/latest/install.sh | sudo bash          
+
+        - name: Trivy Vulnerability Scan (API)
+          continue-on-error: true
+          run: |
+            trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop | tee trivy_api_log.txt
+    
+        - name: Trivy Vulnerability Scan (Dashboard)
+          continue-on-error: true
+          run: |
+            trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop | tee trivy_dashboard_log.txt
+        
+        - name: Upload Trivy Log
+          uses: actions/upload-artifact@v4
+          with:
+              name: trivy-logs
+              path: |
+                trivy_api_log.txt
+                trivy_dashboard_log.txt
+
+        - name: Login to DockerHub
+          run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+        - name: Push Api Image to DockerHub
+          run: docker push ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
+
+        - name: Push Dashboard Image to DockerHub
+          run: docker push ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
