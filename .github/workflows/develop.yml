@@ -80,41 +80,37 @@
 
         - name: Tag images for Docker Hub
           run: |
-              docker tag saleor-api${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
-              docker tag saleor-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
+            docker tag saleor-api${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
+            docker tag saleor-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
                   
     
         - name: Run health check 
           run: |
             docker compose up -d --wait
             sleep 15
+          
+            # Check PostgreSQL is running
+            until docker-compose exec -T db pg_isready -U ${{ secrets.DATABASE_USER }}; do
+              echo "Waiting for PostgreSQL..."
+              sleep 5
+            done
+            echo " Database is ready!"
+          
+            # Check Redis is running
+            until docker-compose exec -T redis redis-cli ping | grep -q PONG; do
+              echo "Waiting for Redis..."
+              sleep 5
+            done
+            echo " Redis is ready!"
 
-         run: |
-          docker-compose up -d
-          sleep 15
+            # Check API is running
+            until curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/graphql/ | grep -qE "200|404"; do
+              echo "Waiting for API..."
+              sleep 5
+            done
+            echo " API Health Check Passed"
           
-          # Check PostgreSQL is running
-          until docker-compose exec -T db pg_isready -U ${{ secrets.DATABASE_USER }}; do
-            echo "Waiting for PostgreSQL..."
-            sleep 5
-          done
-          echo "✅ Database is ready!"
-          
-          # Check Redis is running
-          until docker-compose exec -T redis redis-cli ping | grep -q PONG; do
-            echo "Waiting for Redis..."
-            sleep 5
-          done
-          echo " Redis is ready!"
-
-          # Check API is running
-          until curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/graphql/ | grep -qE "200|404"; do
-            echo "Waiting for API..."
-            sleep 5
-          done
-          echo " API Health Check Passed"
-          
-          docker compose down
+            docker compose down
 
         - name: Install Trivy
           run: |
