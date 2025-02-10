@@ -108,14 +108,14 @@
             sleep 15
           
             # Check PostgreSQL is running
-            until docker-compose exec -T db pg_isready -U ${{ secrets.DATABASE_USER }}; do
+            until docker compose exec -T db pg_isready -U ${{ secrets.DATABASE_USER }}; do
               echo "Waiting for PostgreSQL..."
               sleep 5
             done
             echo " Database is ready!"
           
             # Check Redis is running
-            until docker-compose exec -T redis redis-cli ping | grep -q PONG; do
+            until docker compose exec -T redis redis-cli ping | grep -q PONG; do
               echo "Waiting for Redis..."
               sleep 5
             done
