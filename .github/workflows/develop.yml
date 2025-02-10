@@ -55,9 +55,11 @@
       runs-on: ubuntu-latest
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        RSA_PRIVATE_KEY: ${{ secrets.RSA_PRIVATE_KEY }}
+        RSA_PRIVATE_KEY: |
+          ${{ secrets.RSA_PRIVATE_KEY }}
         GRAPHQL_API_URL: ${{ secrets.GRAPHQL_API_URL }}
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        SECRET_KEY: |
+          ${{ secrets.SECRET_KEY }}
         ALLOWED_GRAPHQL_ORIGINS: "${{ secrets.DASHBOARD_URL }},${{ secrets.API_URL }}"
         API_URL: ${{ secrets.API_URL }}
         ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
@@ -81,7 +83,7 @@
         - name: Tag images for Docker Hub
           run: |
             docker tag codeyou-devops-with-aws-final-project-saleor-full-api ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
-            docker tag odeyou-devops-with-aws-final-project-saleor-full-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
+            docker tag codeyou-devops-with-aws-final-project-saleor-full-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
                   
     
         - name: Run health check 
