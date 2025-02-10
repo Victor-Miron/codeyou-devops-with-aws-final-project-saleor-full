@@ -69,9 +69,9 @@ jobs:
   
       - name: Run Health Check for API(Accept 200 or 404)
         run: |
-          docker run --rm -d --name temp_api -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop 
+          docker run --rm -d --name temp_api -p 8000:80 ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop 
           sleep 10
-          if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/graphql | grep -qE "200|404"; then
+          if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/graphql/ | grep -qE "200|404"; then
             echo " API Health Check Passed"
           else
             echo " Health Check Failed" && exit 1
