@@ -1,9 +1,9 @@
-  name: saleor develop pipeline
+  name: saleor staging pipeline
 
   on:
     push:
       branches:
-        - develop
+        - staging
 
   jobs:
     lint:
@@ -84,8 +84,8 @@
 
         - name: Tag images for Docker Hub
           run: |
-            docker tag codeyou-devops-with-aws-final-project-saleor-full-api ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
-            docker tag codeyou-devops-with-aws-final-project-saleor-full-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
+            docker tag codeyou-devops-with-aws-final-project-saleor-full-api ${{ secrets.DOCKER_USERNAME }}/saleor-api:staging
+            docker tag codeyou-devops-with-aws-final-project-saleor-full-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:staging
                   
         - name: Run health check 
           env:
@@ -145,12 +145,12 @@
         - name: Trivy Vulnerability Scan (API)
           continue-on-error: true
           run: |
-            trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop | tee trivy_api_log.txt
+            trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-api:staging | tee trivy_api_log.txt
     
         - name: Trivy Vulnerability Scan (Dashboard)
           continue-on-error: true
           run: |
-            trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop | tee trivy_dashboard_log.txt
+            trivy image ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:staging | tee trivy_dashboard_log.txt
         
         - name: Upload Trivy Log
           uses: actions/upload-artifact@v4
@@ -164,7 +164,7 @@
           run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
         - name: Push Api Image to DockerHub
-          run: docker push ${{ secrets.DOCKER_USERNAME }}/saleor-api:develop
+          run: docker push ${{ secrets.DOCKER_USERNAME }}/saleor-api:staging
 
         - name: Push Dashboard Image to DockerHub
-          run: docker push ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:develop
+          run: docker push ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:staging
