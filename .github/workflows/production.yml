@@ -1,4 +1,4 @@
-name: saleor production pipeline
+name: saleor-production-pipeline
 
 on:
   push:
@@ -25,19 +25,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build Docker Images
-        run: |
-          docker compose build
-
-          - name: Tag images for Docker Hub
-          run: |
-            docker tag codeyou-devops-with-aws-final-project-saleor-full-api ${{ secrets.DOCKER_USERNAME }}/saleor-api:production
-            docker tag codeyou-devops-with-aws-final-project-saleor-full-api ${{ secrets.DOCKER_USERNAME }}/saleor-api:latest
-            docker tag codeyou-devops-with-aws-final-project-saleor-full-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:production
-            docker tag codeyou-devops-with-aws-final-project-saleor-full-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:latest
-
       - name: Login to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Build and Tag Docker Images Using Docker Compose
+        run: |
+          docker compose build
+          docker tag codeyou-devops-with-aws-final-project-saleor-full-api ${{ secrets.DOCKER_USERNAME }}/saleor-api:production
+          docker tag codeyou-devops-with-aws-final-project-saleor-full-api ${{ secrets.DOCKER_USERNAME }}/saleor-api:latest
+          docker tag codeyou-devops-with-aws-final-project-saleor-full-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:production
+          docker tag codeyou-devops-with-aws-final-project-saleor-full-dashboard ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:latest
 
       - name: Push API Image to DockerHub
         run: |
@@ -49,3 +46,5 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:production
           docker push ${{ secrets.DOCKER_USERNAME }}/saleor-dashboard:latest
 
+    
+  
