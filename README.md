@@ -2,7 +2,7 @@
 
 Welcome to the Saleor Platform Project! This project involves deploying a fully functional Saleor-based e-commerce platform. Saleor is a modern, open-source, headless e-commerce platform that provides a robust GraphQL API and a user-friendly dashboard for managing your online store.
 
-This README serves as the entry point for students who have chosen the Saleor project to deploy. It includes links to key documentation and instructions to get started.
+This README serves as the entry point for students who have chosen the Saleor project to deploy. It includes links to key documentation and instructions to get started..
 
 ---
 
